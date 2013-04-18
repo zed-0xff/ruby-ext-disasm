@@ -16,5 +16,5 @@ Gem::Specification.new do |s|
   s.platform      = Gem::Platform::RUBY
   s.require_paths = ['lib']
   s.rubyforge_project = '[none]'
-  s.extensions    = ['ext/disasm/extconf.rb']
+  s.extensions    = ['ext/disasm_ext/extconf.rb']
 end

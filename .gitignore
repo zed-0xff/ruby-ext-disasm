@@ -23,3 +23,8 @@ tmp
 .yardoc
 _yardoc
 doc/
+
+*.o
+*.bundle
+*.log
+Makefile

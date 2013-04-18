@@ -38,7 +38,7 @@ static VALUE t_disassemble2yield(VALUE self, VALUE _data, VALUE _rva, VALUE _off
 
 VALUE mDisasm;
 
-void Init_disasm() {
+void Init_disasm_ext() {
     x86_init(opt_none, NULL, NULL);
     mDisasm = rb_define_module("Disasm");
     rb_define_singleton_method(mDisasm, "init", t_init, 0);
