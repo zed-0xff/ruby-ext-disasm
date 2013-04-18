@@ -1,3 +1,5 @@
+require 'disasm_ext'
+
 module Disasm
   class << self
     def disasm data, params = {}
