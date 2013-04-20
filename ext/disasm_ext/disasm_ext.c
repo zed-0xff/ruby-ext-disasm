@@ -5,7 +5,7 @@
 
 static VALUE t_init(VALUE self)
 {
-    return INT2FIX(x86_init(opt_none, NULL, NULL));
+    return INT2NUM(x86_init(opt_none, NULL, NULL));
 }
 
 static VALUE t_disassemble2yield( 
@@ -24,13 +24,13 @@ static VALUE t_disassemble2yield(
 
     char*buf             = RSTRING_PTR(_data);
     unsigned int bufsize = RSTRING_LEN(_data);
-    uint32_t rva         = FIX2INT(_rva);
-    unsigned int offset  = FIX2INT(_offset);
-    int syntax           = FIX2INT(_syntax);
+    unsigned int rva     = NUM2UINT(_rva);
+    unsigned int offset  = NUM2UINT(_offset);
+    int syntax           = NUM2INT(_syntax);
     int n_ok             = 0; // number of successfully disassembled instructions
     int allow_invalid    = (_allow_invalid == Qtrue);
 
-    if(!buf || !bufsize) return INT2FIX(0);
+    if(!buf || !bufsize) return INT2NUM(0);
 
     switch(syntax){
         case native_syntax:
@@ -47,17 +47,17 @@ static VALUE t_disassemble2yield(
 
     while( offset < bufsize ){
         size = x86_disasm(buf, bufsize, rva, offset, &insn);
-        if( size ){
-            // success
+        if( size || allow_invalid ){
             line_len = x86_format_insn(&insn, line, LINE_SIZE, syntax);
-            rb_yield_values(2, rb_str_new(line, line_len), INT2FIX(offset+rva));
-            offset += size;
-            n_ok++;
-        } else if( allow_invalid ) {
-            // invalid instruction : allowed
-            line_len = x86_format_insn(&insn, line, LINE_SIZE, syntax);
-            rb_yield_values(2, rb_str_new(line, line_len), INT2FIX(offset+rva));
-            offset += 1;
+            rb_yield_values(2, rb_str_new(line, line_len), UINT2NUM(offset+rva));
+	    if( size ){
+                // success
+		offset += size;
+                n_ok++;
+	    } else {
+                // invalid instruction : allowed
+                offset += 1;
+	    }
         } else {
             // invalid instruction : raise exception
             char err_buf[1024];
@@ -68,7 +68,7 @@ static VALUE t_disassemble2yield(
         }
     }
 
-    return INT2FIX(n_ok);
+    return INT2NUM(n_ok);
 }
 
 VALUE mDisasm;
