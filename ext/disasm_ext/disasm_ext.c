@@ -8,7 +8,13 @@ static VALUE t_init(VALUE self)
     return INT2FIX(x86_init(opt_none, NULL, NULL));
 }
 
-static VALUE t_disassemble2yield(VALUE self, VALUE _data, VALUE _rva, VALUE _offset, VALUE _syntax)
+static VALUE t_disassemble2yield( 
+        VALUE self, 
+        VALUE _data, 
+        VALUE _rva, 
+        VALUE _offset, 
+        VALUE _syntax,
+        VALUE _allow_invalid)
 {
     x86_insn_t insn;
     int size, line_len;
@@ -22,6 +28,7 @@ static VALUE t_disassemble2yield(VALUE self, VALUE _data, VALUE _rva, VALUE _off
     unsigned int offset  = FIX2INT(_offset);
     int syntax           = FIX2INT(_syntax);
     int n_ok             = 0; // number of successfully disassembled instructions
+    int allow_invalid    = (_allow_invalid == Qtrue);
 
     if(!buf || !bufsize) return INT2FIX(0);
 
@@ -46,10 +53,15 @@ static VALUE t_disassemble2yield(VALUE self, VALUE _data, VALUE _rva, VALUE _off
             rb_yield_values(2, rb_str_new(line, line_len), INT2FIX(offset+rva));
             offset += size;
             n_ok++;
+        } else if( allow_invalid ) {
+            // invalid instruction : allowed
+            line_len = x86_format_insn(&insn, line, LINE_SIZE, syntax);
+            rb_yield_values(2, rb_str_new(line, line_len), INT2FIX(offset+rva));
+            offset += 1;
         } else {
-            // invalid instruction
+            // invalid instruction : raise exception
             char err_buf[1024];
-            sprintf(err_buf, "raise InvalidInstruction.new(0x%x, 0x%x)", offset, offset+rva);
+            sprintf(err_buf, "raise InvalidOpcode.new(0x%x, 0x%x)", offset, offset+rva);
             rb_eval_string(err_buf);
             //rb_raise(ex,"invalid instruction at offset 0x%x (VA 0x%x)", offset, offset+rva);
             break;
@@ -65,5 +77,5 @@ void Init_disasm_ext() {
     x86_init(opt_none, NULL, NULL);
     mDisasm = rb_define_module("Disasm");
     rb_define_singleton_method(mDisasm, "init", t_init, 0);
-    rb_define_singleton_method(mDisasm, "disassemble2yield", t_disassemble2yield, 4);
+    rb_define_singleton_method(mDisasm, "disassemble2yield", t_disassemble2yield, 5);
 }

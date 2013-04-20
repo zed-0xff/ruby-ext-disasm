@@ -3,7 +3,7 @@ require 'disasm_ext'
 module Disasm
 
   class Exception < ::Exception; end
-  class InvalidInstruction < Exception
+  class InvalidOpcode < Exception
     attr_accessor :offset, :va
 
     def initialize offset, va
@@ -31,13 +31,15 @@ module Disasm
         else 1          # default to native syntax
         end
 
+      allow_invalid = params[:allow_invalid] ? true : false
+
       if block_given?
-        disassemble2yield(data, rva, offset, syntax) do |x,va|
+        disassemble2yield(data, rva, offset, syntax, allow_invalid) do |x,va|
           yield x,va
         end
       else
         r = []
-        disassemble2yield(data, rva, offset, syntax) do |x|
+        disassemble2yield(data, rva, offset, syntax, allow_invalid) do |x|
           r << x
         end
         r
